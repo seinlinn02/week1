@@ -25,7 +25,7 @@ def check_border_collision(position, GRID_COUNT):
     Returns True if there's a collision, False otherwise.
     """
     x, y = position
-    return x < 0 or x >= GRID_COUNT or y < 0 or y >= GRID_COUNT
+    return x < 0 or x >= GRID_COUNT+3 or y < 0 or y >= GRID_COUNT
 
 def calculate_game_speed(score):
     """
