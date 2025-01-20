@@ -73,6 +73,10 @@ class GameDesign:
         self.YELLOW = (255, 255, 0)
         self.BORDER_COLOR = (100, 100, 100)  # Color for the border
 
+        # Load apple icon
+        self.apple_image = pygame.image.load('apple_icon.png')
+        self.apple_image = pygame.transform.scale(self.apple_image, (self.GRID_SIZE, self.GRID_SIZE))
+
     def reset_game(self):
         self.snake.reset()
         self.food = Food(self.snake.body, self.GRID_COUNT)
@@ -144,9 +148,10 @@ class GameDesign:
             ))
         
         # Draw food
-        pygame.draw.rect(screen, self.RED, (
-            self.food.position[0] * self.GRID_SIZE,
-            self.food.position[1] * self.GRID_SIZE + self.HEADER_HEIGHT,
-            self.GRID_SIZE - 1,
-            self.GRID_SIZE - 1
-        ))
+        screen.blit(
+            self.apple_image,
+            (
+                self.food.position[0] * self.GRID_SIZE,
+                self.food.position[1] * self.GRID_SIZE + self.HEADER_HEIGHT
+            )
+        )
