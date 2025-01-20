@@ -15,12 +15,12 @@ class Snake:
     def move(self):
         head = self.body[0]
         new_head = (
-            (head[0] + self.direction[0]) % self.GRID_COUNT,
-            (head[1] + self.direction[1]) % self.GRID_COUNT
+            head[0] + self.direction[0],
+            head[1] + self.direction[1]
         )
 
-        if new_head in self.body:
-            return False  # Game over
+        if new_head in self.body or not (0 <= new_head[0] < self.GRID_COUNT and 0 <= new_head[1] < self.GRID_COUNT):
+            return False  # Game over        
 
         self.body.insert(0, new_head)
         if not self.grow:
