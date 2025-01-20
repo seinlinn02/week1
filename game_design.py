@@ -1,6 +1,6 @@
 import pygame
 import random
-
+from game_functions import calculate_game_speed, calculate_food_spawn_delay, check_border_collision
 
 class Snake:
     def __init__(self, GRID_COUNT):
@@ -18,10 +18,12 @@ class Snake:
             head[0] + self.direction[0],
             head[1] + self.direction[1]
         )
-
-        if new_head in self.body or not (0 <= new_head[0] < self.GRID_COUNT and 0 <= new_head[1] < self.GRID_COUNT):
-            return False  # Game over        
-
+        
+        # Check for collisions
+        if (check_border_collision(new_head, self.GRID_COUNT) or 
+            new_head in self.body):
+            return False  # Game over
+            
         self.body.insert(0, new_head)
         if not self.grow:
             self.body.pop()
@@ -31,15 +33,16 @@ class Snake:
 
     def change_direction(self, new_direction):
         # Prevent 180-degree turns
-        if (new_direction[0] != -self.direction[0] or
-                new_direction[1] != -self.direction[1]):
+        if (new_direction[0] != -self.direction[0] or 
+            new_direction[1] != -self.direction[1]):
             self.direction = new_direction
-
 
 class Food:
     def __init__(self, snake_body, GRID_COUNT):
         self.GRID_COUNT = GRID_COUNT
         self.position = self.generate_position(snake_body)
+        self.spawn_timer = 0
+        self.spawn_delay = calculate_food_spawn_delay(0)  # Initial spawn delay
 
     def generate_position(self, snake_body):
         while True:
@@ -49,7 +52,6 @@ class Food:
             )
             if position not in snake_body:
                 return position
-
 
 class GameDesign:
     def __init__(self, GRID_COUNT, GRID_SIZE, HEADER_HEIGHT):
@@ -61,13 +63,15 @@ class GameDesign:
         self.game_over = False
         self.score = 0
         self.high_score = 0
-
+        
         # Colors
         self.BLACK = (0, 0, 0)
         self.GREEN = (0, 255, 0)
         self.RED = (255, 0, 0)
         self.GRAY = (50, 50, 50)
         self.WHITE = (255, 255, 255)
+        self.YELLOW = (255, 255, 0)
+        self.BORDER_COLOR = (100, 100, 100)  # Color for the border
 
     def reset_game(self):
         self.snake.reset()
@@ -91,30 +95,45 @@ class GameDesign:
         # Draw header background
         header_rect = pygame.Rect(0, 0, WINDOW_SIZE, self.HEADER_HEIGHT)
         pygame.draw.rect(screen, self.GRAY, header_rect)
-
-        # Draw dividing line
-        pygame.draw.line(screen, self.WHITE,
-                         (WINDOW_SIZE // 2, 5),
-                         (WINDOW_SIZE // 2, self.HEADER_HEIGHT - 5), 2)
-
+        
+        # Draw dividing lines
+        third = WINDOW_SIZE // 3
+        pygame.draw.line(screen, self.WHITE, (third, 5), (third, self.HEADER_HEIGHT - 5), 2)
+        pygame.draw.line(screen, self.WHITE, (2 * third, 5), (2 * third, self.HEADER_HEIGHT - 5), 2)
+        
         font = pygame.font.Font(None, 36)
+        
         # Draw score on left
         score_text = font.render(f"Score: {self.score}", True, self.WHITE)
-        score_rect = score_text.get_rect(midtop=(WINDOW_SIZE // 4, 15))
+        score_rect = score_text.get_rect(midtop=(third // 2, 15))
         screen.blit(score_text, score_rect)
-
+        
+        # Draw speed in middle
+        current_speed = calculate_game_speed(self.score)
+        speed_text = font.render(f"Speed: {current_speed}", True, self.YELLOW)
+        speed_rect = speed_text.get_rect(midtop=(WINDOW_SIZE // 2, 15))
+        screen.blit(speed_text, speed_rect)
+        
         # Draw high score on right
         high_score_text = font.render(f"High Score: {self.high_score}", True, self.WHITE)
-        high_score_rect = high_score_text.get_rect(midtop=(WINDOW_SIZE * 3 // 4, 15))
+        high_score_rect = high_score_text.get_rect(midtop=(2.5 * third, 15))
         screen.blit(high_score_text, high_score_rect)
+
+    def draw_border(self, screen, WINDOW_SIZE):
+        border_rect = pygame.Rect(0, self.HEADER_HEIGHT, 
+                                WINDOW_SIZE, WINDOW_SIZE - self.HEADER_HEIGHT)
+        pygame.draw.rect(screen, self.BORDER_COLOR, border_rect, 2)
 
     def draw(self, screen, WINDOW_SIZE):
         # Clear screen
         screen.fill(self.BLACK)
-
+        
         # Draw header
         self.draw_header(screen, WINDOW_SIZE)
-
+        
+        # Draw border
+        self.draw_border(screen, WINDOW_SIZE)
+        
         # Draw snake
         for segment in self.snake.body:
             pygame.draw.rect(screen, self.GREEN, (
@@ -123,7 +142,7 @@ class GameDesign:
                 self.GRID_SIZE - 1,
                 self.GRID_SIZE - 1
             ))
-
+        
         # Draw food
         pygame.draw.rect(screen, self.RED, (
             self.food.position[0] * self.GRID_SIZE,

@@ -1,6 +1,6 @@
 import pygame
 from game_design import GameDesign
-from game_functions import initialize_game, show_game_over_screen
+from game_functions import initialize_game, show_game_over_screen, calculate_game_speed
 
 def main():
     try:
@@ -53,7 +53,10 @@ def main():
                 game.draw(screen, WINDOW_SIZE)
                 
             pygame.display.flip()
-            clock.tick(10)  # Control game speed
+            
+            # Get current game speed based on score
+            current_speed = calculate_game_speed(game.score)
+            clock.tick(current_speed)
             
     except Exception as e:
         print(f"An error occurred: {e}")
